@@ -21,6 +21,7 @@ That builds a `dist/WhichNet.app` agent (no Dock icon) and opens it. Click the m
 - The symbol should match the default route (`wifi` vs `cable.connector`).
 - The panel (respawken-style window, not a native menu) should badge the default-route interface as **Active**.
 - Other up links (Wi-Fi while docked, etc.) should appear with a **Standby** badge.
+- The footer **Launch at login** checkbox should match System Settings → General → Login Items.
 
 User-visible check: with Wi-Fi on, plug in the Thunderbolt dock. The icon should switch to Ethernet and the dock NIC should be listed as carrying internet. Unplug: it should return to Wi-Fi.
 

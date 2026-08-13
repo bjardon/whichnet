@@ -7,6 +7,10 @@ struct WhichNetApp: App {
 
     init() {
         NSApplication.shared.setActivationPolicy(.accessory)
+        // SMAppService needs Launch Services to know about this bundle; App.init is too early.
+        DispatchQueue.main.async {
+            LaunchAtLogin.applyDefaultIfNeeded()
+        }
     }
 
     var body: some Scene {

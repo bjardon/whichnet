@@ -14,4 +14,6 @@ make run
 
 That builds `dist/WhichNet.app` and opens it. There is no Dock icon; look in the menu bar.
 
+First launch registers it as a login item (the panel toggle can turn that off). If you move the bundle, toggle Launch at login off and on so macOS picks up the new path.
+
 Quit from the panel, or `make kill`.

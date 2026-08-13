@@ -15,6 +15,8 @@ extension LinkKind {
 
 struct PanelView: View {
     @ObservedObject var store: NetworkStore
+    @State private var launchAtLoginEnabled = false
+    @State private var launchAtLoginNote: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -43,6 +45,10 @@ struct PanelView: View {
             footer
         }
         .frame(width: 320)
+        .onAppear {
+            launchAtLoginEnabled = LaunchAtLogin.isEnabled
+            launchAtLoginNote = LaunchAtLogin.lastError
+        }
     }
 
     private var header: some View {
@@ -53,15 +59,47 @@ struct PanelView: View {
     }
 
     private var footer: some View {
-        HStack {
-            Spacer()
-            Button("Quit") { NSApplication.shared.terminate(nil) }
-                .buttonStyle(.plain)
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Toggle("Launch at login", isOn: launchAtLoginBinding)
+                    .toggleStyle(.checkbox)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Quit") { NSApplication.shared.terminate(nil) }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
+            if LaunchAtLogin.needsApproval {
+                Text("Approve WhichNet in System Settings → General → Login Items.")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
+            if let launchAtLoginNote {
+                Text(launchAtLoginNote)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
+    }
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { launchAtLoginEnabled },
+            set: { newValue in
+                launchAtLoginEnabled = newValue
+                if let error = LaunchAtLogin.setEnabled(newValue) {
+                    launchAtLoginEnabled = LaunchAtLogin.isEnabled
+                    launchAtLoginNote = error
+                } else {
+                    launchAtLoginEnabled = LaunchAtLogin.isEnabled
+                    launchAtLoginNote = nil
+                }
+            }
+        )
     }
 }
 
