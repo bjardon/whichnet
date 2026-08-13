@@ -9,9 +9,6 @@ final class NetworkStore: ObservableObject {
         primary: nil,
         alsoConnected: []
     )
-    @Published private(set) var isRefreshing = false
-    @Published private(set) var lastRefresh: Date?
-    @Published private(set) var tick = Date()
 
     private var monitor: NWPathMonitor?
     private var started = false
@@ -45,26 +42,20 @@ final class NetworkStore: ObservableObject {
 
         loop = Task { [weak self] in
             while let self, !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-                self.tick = Date()
-                if Int(self.tick.timeIntervalSince1970).isMultiple(of: 2) {
-                    self.refresh(showSpinner: false)
-                }
+                try? await Task.sleep(for: .seconds(2))
+                self.refresh()
             }
         }
 
-        refresh(showSpinner: false)
+        refresh()
     }
 
-    func refresh(showSpinner: Bool = true) {
-        if showSpinner { isRefreshing = true }
-        defer { if showSpinner { isRefreshing = false } }
+    private func refresh() {
         guard let path = monitor?.currentPath else { return }
         apply(NetworkProbe.snapshot(path: path))
     }
 
     fileprivate func apply(_ next: NetworkSnapshot) {
-        lastRefresh = Date()
         if snapshot != next {
             snapshot = next
         }

@@ -46,35 +46,14 @@ struct PanelView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 6) {
-            Text("whichnet")
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-            Spacer()
-            if store.isRefreshing {
-                ProgressView()
-                    .controlSize(.small)
-                    .scaleEffect(0.7)
-                    .frame(width: 14, height: 14)
-            } else {
-                Button {
-                    store.refresh()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 11, weight: .medium))
-                }
-                .buttonStyle(.plain)
-                .help("Refresh now")
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        Text("whichnet")
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
     }
 
     private var footer: some View {
         HStack {
-            Text(lastRefreshLabel)
-                .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
             Spacer()
             Button("Quit") { NSApplication.shared.terminate(nil) }
                 .buttonStyle(.plain)
@@ -83,14 +62,6 @@ struct PanelView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-    }
-
-    private var lastRefreshLabel: String {
-        guard let last = store.lastRefresh else { return "Loading…" }
-        let elapsed = Int(store.tick.timeIntervalSince(last))
-        if elapsed < 60 { return "Updated just now" }
-        if elapsed < 3600 { return "Updated \(elapsed / 60)m ago" }
-        return "Updated \(elapsed / 3600)h ago"
     }
 }
 
