@@ -8,7 +8,11 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "WhichNet"
+            name: "WhichNet",
+            linkerSettings: [
+                .linkedFramework("CoreLocation"),
+                .linkedFramework("CoreWLAN")
+            ]
         )
     ]
 )

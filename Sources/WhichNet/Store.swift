@@ -1,3 +1,5 @@
+import AppKit
+import CoreLocation
 import Network
 import SwiftUI
 
@@ -13,6 +15,7 @@ final class NetworkStore: ObservableObject {
     private var monitor: NWPathMonitor?
     private var started = false
     private var loop: Task<Void, Never>?
+    private let location = LocationAccess()
 
     init() {
         start()
@@ -40,6 +43,11 @@ final class NetworkStore: ObservableObject {
         monitor.start(queue: DispatchQueue(label: "dev.bjardon.whichnet.path"))
         self.monitor = monitor
 
+        location.onChange = { [weak self] in
+            self?.refresh()
+        }
+        location.requestIfNeeded()
+
         loop = Task { [weak self] in
             while let self, !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(2))
@@ -48,6 +56,10 @@ final class NetworkStore: ObservableObject {
         }
 
         refresh()
+    }
+
+    func requestSSIDAccess() {
+        location.requestIfNeeded()
     }
 
     private func refresh() {
@@ -69,4 +81,32 @@ final class NetworkStore: ObservableObject {
 
 extension NetworkStore {
     static weak var shared: NetworkStore?
+}
+
+/// CoreWLAN withholds SSID until Location Services authorizes this bundle.
+@MainActor
+private final class LocationAccess: NSObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+    var onChange: (() -> Void)?
+
+    override init() {
+        super.init()
+        manager.delegate = self
+    }
+
+    func requestIfNeeded() {
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            NSApplication.shared.activate(ignoringOtherApps: true)
+            manager.requestWhenInUseAuthorization()
+        default:
+            break
+        }
+    }
+
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor [weak self] in
+            self?.onChange?()
+        }
+    }
 }

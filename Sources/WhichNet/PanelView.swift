@@ -48,6 +48,7 @@ struct PanelView: View {
         .onAppear {
             launchAtLoginEnabled = LaunchAtLogin.isEnabled
             launchAtLoginNote = LaunchAtLogin.lastError
+            store.requestSSIDAccess()
         }
     }
 
@@ -125,6 +126,12 @@ private struct InterfaceRow: View {
 
             if iface.displayName != iface.kind.title {
                 Fact(label: "Type", value: iface.kind.title)
+            }
+            if let ssid = iface.ssid {
+                Fact(label: "Network", value: ssid)
+            }
+            if let channel = iface.channel {
+                Fact(label: "Channel", value: channel)
             }
             if let address = iface.address {
                 Fact(label: "Address", value: address)

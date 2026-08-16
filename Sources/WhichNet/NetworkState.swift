@@ -1,3 +1,4 @@
+import CoreWLAN
 import Darwin
 import Foundation
 import Network
@@ -40,6 +41,8 @@ struct InterfaceInfo: Equatable, Sendable, Identifiable {
     var displayName: String
     var kind: LinkKind
     var address: String?
+    var ssid: String?
+    var channel: String?
 }
 
 struct NetworkSnapshot: Equatable, Sendable {
@@ -103,12 +106,38 @@ enum NetworkProbe {
         let sc = names[bsd]
         let kind = classify(bsd: bsd, scType: sc?.type, path: isPrimary ? path : nil)
         let display = sc?.display ?? fallbackDisplay(bsd: bsd, kind: kind)
+        let wifi = kind == .wifi ? wifiDetails(bsd: bsd) : (ssid: nil, channel: nil)
         return InterfaceInfo(
             bsdName: bsd,
             displayName: display,
             kind: kind,
-            address: addrs[bsd]
+            address: addrs[bsd],
+            ssid: wifi.ssid,
+            channel: wifi.channel
         )
+    }
+
+    /// SSID is nil unless Location Services has authorized this app.
+    private static func wifiDetails(bsd: String) -> (ssid: String?, channel: String?) {
+        guard let iface = CWWiFiClient.shared().interface(withName: bsd) else {
+            return (nil, nil)
+        }
+        let ssid = iface.ssid().flatMap { $0.isEmpty ? nil : $0 }
+        let channel = iface.wlanChannel().map(formatChannel)
+        return (ssid, channel)
+    }
+
+    private static func formatChannel(_ ch: CWChannel) -> String {
+        let band: String? = switch ch.channelBand {
+        case .band2GHz: "2.4 GHz"
+        case .band5GHz: "5 GHz"
+        case .band6GHz: "6 GHz"
+        default: nil
+        }
+        if let band {
+            return "\(ch.channelNumber) · \(band)"
+        }
+        return "\(ch.channelNumber)"
     }
 
     private static func classify(bsd: String, scType: String?, path: NWPath?) -> LinkKind {

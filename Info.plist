@@ -24,6 +24,10 @@
 	<true/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSLocationUsageDescription</key>
+	<string>WhichNet uses Location to read the Wi-Fi network name. Interface and IP data stay on this Mac.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>WhichNet uses Location to read the Wi-Fi network name. Interface and IP data stay on this Mac.</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<false/>
 	<key>NSSupportsSuddenTermination</key>
