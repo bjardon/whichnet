@@ -43,6 +43,7 @@ struct InterfaceInfo: Equatable, Sendable, Identifiable {
     var address: String?
     var ssid: String?
     var channel: String?
+    var isLinkActive: Bool
 }
 
 struct NetworkSnapshot: Equatable, Sendable {
@@ -54,11 +55,11 @@ struct NetworkSnapshot: Equatable, Sendable {
     var tooltip: String {
         guard hasInternet, let primary else { return "No internet connection" }
         let active = primary.displayName == kind.title ? kind.title : "\(kind.title) · \(primary.displayName)"
-        if alsoConnected.isEmpty {
+        let others = alsoConnected.filter(\.isLinkActive).map(\.displayName)
+        if others.isEmpty {
             return active
         }
-        let others = alsoConnected.map(\.displayName).joined(separator: ", ")
-        return "\(active) (\(others) also connected)"
+        return "\(active) (\(others.joined(separator: ", ")) also connected)"
     }
 }
 
@@ -67,10 +68,16 @@ enum NetworkProbe {
         let hasInternet = path.status == .satisfied
         let names = scNames()
         let addrs = interfaceAddresses()
+        let link = linkActive()
         let primaryName = primaryBSDName() ?? path.availableInterfaces.first?.name
 
+        var bsdNames = Set(names.keys)
+        if let primaryName {
+            bsdNames.insert(primaryName)
+        }
+
         let primary: InterfaceInfo? = primaryName.map { bsd in
-            describe(bsd: bsd, names: names, addrs: addrs, path: path, isPrimary: true)
+            describe(bsd: bsd, names: names, addrs: addrs, link: link, path: path, isPrimary: true)
         }
 
         var kind: LinkKind = .offline
@@ -79,13 +86,14 @@ enum NetworkProbe {
         }
 
         var also: [InterfaceInfo] = []
-        for bsd in addrs.keys.sorted() {
+        for bsd in bsdNames.sorted() {
             if bsd == primaryName { continue }
-            if shouldIgnore(bsd) { continue }
-            let info = describe(bsd: bsd, names: names, addrs: addrs, path: path, isPrimary: false)
-            guard info.kind == .wifi || info.kind == .ethernet || info.kind == .cellular else { continue }
-            guard info.address != nil else { continue }
-            also.append(info)
+            if names[bsd] == nil, shouldIgnore(bsd) { continue }
+            also.append(describe(bsd: bsd, names: names, addrs: addrs, link: link, path: path, isPrimary: false))
+        }
+        also.sort { lhs, rhs in
+            if lhs.isLinkActive != rhs.isLinkActive { return lhs.isLinkActive && !rhs.isLinkActive }
+            return lhs.displayName.localizedStandardCompare(rhs.displayName) == .orderedAscending
         }
 
         return NetworkSnapshot(
@@ -100,6 +108,7 @@ enum NetworkProbe {
         bsd: String,
         names: [String: (display: String, type: String)],
         addrs: [String: String],
+        link: [String: Bool],
         path: NWPath,
         isPrimary: Bool
     ) -> InterfaceInfo {
@@ -113,7 +122,8 @@ enum NetworkProbe {
             kind: kind,
             address: addrs[bsd],
             ssid: wifi.ssid,
-            channel: wifi.channel
+            channel: wifi.channel,
+            isLinkActive: link[bsd] ?? (addrs[bsd] != nil)
         )
     }
 
@@ -148,6 +158,7 @@ enum NetworkProbe {
         case "IEEE80211": return .wifi
         case "Ethernet", "Thunderbolt": return .ethernet
         case "WWAN": return .cellular
+        case "Bridge": return .ethernet
         default: break
         }
         if let path, let fromPath = kindFromPath(path) {
@@ -174,9 +185,34 @@ enum NetworkProbe {
         }
     }
 
+    private static func isTrue(_ value: Any?) -> Bool {
+        if let flag = value as? Bool { return flag }
+        if let number = value as? NSNumber { return number.boolValue }
+        return false
+    }
+
     private static func shouldIgnore(_ bsd: String) -> Bool {
         let prefixes = ["lo", "gif", "stf", "anpi", "ap", "awdl", "llw", "bridge", "debug", "utun", "ipsec"]
         return prefixes.contains { bsd == $0 || bsd.hasPrefix($0) }
+    }
+
+    private static func linkActive() -> [String: Bool] {
+        var result: [String: Bool] = [:]
+        guard let store = SCDynamicStoreCreate(nil, "WhichNet" as CFString, nil, nil) else {
+            return result
+        }
+        let pattern = "State:/Network/Interface/[^/]+/Link" as CFString
+        guard let keys = SCDynamicStoreCopyKeyList(store, pattern) as? [String] else {
+            return result
+        }
+        for key in keys {
+            guard let info = SCDynamicStoreCopyValue(store, key as CFString) as? [String: Any] else { continue }
+            let parts = key.split(separator: "/")
+            guard parts.count >= 4 else { continue }
+            let bsd = String(parts[3])
+            result[bsd] = isTrue(info["Active"])
+        }
+        return result
     }
 
     private static func primaryBSDName() -> String? {

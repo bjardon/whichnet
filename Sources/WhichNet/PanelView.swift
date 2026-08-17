@@ -112,9 +112,10 @@ private struct InterfaceRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Circle().fill(iface.kind.accent).frame(width: 7, height: 7)
+                Circle().fill(dotColor).frame(width: 7, height: 7)
                 Text(iface.displayName)
                     .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(iface.isLinkActive || isPrimary ? .primary : .secondary)
                 Spacer()
                 Text(badge)
                     .font(.system(size: 9, weight: .medium))
@@ -138,12 +139,19 @@ private struct InterfaceRow: View {
             }
             Fact(label: "Interface", value: iface.bsdName)
         }
+        .opacity(iface.isLinkActive || isPrimary ? 1 : 0.72)
     }
 
     private var badge: String {
         if isPrimary, hasInternet { return "Active" }
         if isPrimary { return "Offline" }
-        return "Standby"
+        if iface.isLinkActive { return "Standby" }
+        return "Inactive"
+    }
+
+    private var dotColor: Color {
+        if iface.isLinkActive || isPrimary { return iface.kind.accent }
+        return Color.primary.opacity(0.28)
     }
 }
 
