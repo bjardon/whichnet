@@ -15,11 +15,11 @@ enum LinkKind: String, Equatable, Sendable {
     var symbolName: String {
         switch self {
         case .wifi: "wifi"
-        case .ethernet: "cable.connector"
+        case .ethernet: "app.connected.to.app.below.fill"
         case .cellular: "antenna.radiowaves.left.and.right"
-        case .vpn: "lock.shield"
+        case .vpn: "network.badge.shield.half.filled"
         case .other: "network"
-        case .offline: "wifi.slash"
+        case .offline: "xmark.circle"
         }
     }
 

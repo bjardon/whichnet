@@ -18,8 +18,8 @@ make run
 
 That builds a `dist/WhichNet.app` agent (no Dock icon) and opens it. Click the menu bar icon:
 
-- The symbol should match the default route (`wifi` vs `cable.connector`).
-- The panel (respawken-style window, not a native menu) should badge the default-route interface as **Active**.
+- The symbol should match the default route (`wifi` vs `app.connected.to.app.below.fill`).
+- The panel (respawken-style window, not a native menu) should badge the default-route interface as **Active**, and each row should show that interface’s SF Symbol.
 - Other up links (Wi-Fi while docked, etc.) should appear with a **Standby** badge.
 - Hardware ports with no link (unplugged Ethernet, Thunderbolt NICs) should still appear, badged **Inactive**.
 - A Wi-Fi row should show **Network** (SSID) and **Channel** after Location is allowed.

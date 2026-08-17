@@ -111,8 +111,11 @@ private struct InterfaceRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Circle().fill(dotColor).frame(width: 7, height: 7)
+            HStack(spacing: 8) {
+                Image(systemName: iface.kind.symbolName)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 16, height: 16)
                 Text(iface.displayName)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(iface.isLinkActive || isPrimary ? .primary : .secondary)
@@ -149,7 +152,7 @@ private struct InterfaceRow: View {
         return "Inactive"
     }
 
-    private var dotColor: Color {
+    private var iconColor: Color {
         if iface.isLinkActive || isPrimary { return iface.kind.accent }
         return Color.primary.opacity(0.28)
     }
