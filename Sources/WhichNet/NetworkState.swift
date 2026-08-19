@@ -8,6 +8,7 @@ enum LinkKind: String, Equatable, Sendable {
     case wifi
     case ethernet
     case cellular
+    case hotspot
     case vpn
     case other
     case offline
@@ -17,6 +18,7 @@ enum LinkKind: String, Equatable, Sendable {
         case .wifi: "wifi"
         case .ethernet: "app.connected.to.app.below.fill"
         case .cellular: "antenna.radiowaves.left.and.right"
+        case .hotspot: "personalhotspot"
         case .vpn: "network.badge.shield.half.filled"
         case .other: "network"
         case .offline: "xmark.circle"
@@ -28,6 +30,7 @@ enum LinkKind: String, Equatable, Sendable {
         case .wifi: "Wi-Fi"
         case .ethernet: "Ethernet"
         case .cellular: "Cellular"
+        case .hotspot: "Personal Hotspot"
         case .vpn: "VPN"
         case .other: "Other"
         case .offline: "Offline"
@@ -113,9 +116,12 @@ enum NetworkProbe {
         isPrimary: Bool
     ) -> InterfaceInfo {
         let sc = names[bsd]
-        let kind = classify(bsd: bsd, scType: sc?.type, path: isPrimary ? path : nil)
+        var kind = classify(bsd: bsd, scType: sc?.type, path: isPrimary ? path : nil)
+        if looksLikePersonalHotspot(address: addrs[bsd], kind: kind, path: isPrimary ? path : nil) {
+            kind = .hotspot
+        }
         let display = sc?.display ?? fallbackDisplay(bsd: bsd, kind: kind)
-        let wifi = kind == .wifi ? wifiDetails(bsd: bsd) : (ssid: nil, channel: nil)
+        let wifi = sc?.type == "IEEE80211" ? wifiDetails(bsd: bsd) : (ssid: nil, channel: nil)
         return InterfaceInfo(
             bsdName: bsd,
             displayName: display,
@@ -169,10 +175,24 @@ enum NetworkProbe {
 
     private static func kindFromPath(_ path: NWPath) -> LinkKind? {
         if path.usesInterfaceType(.wiredEthernet) { return .ethernet }
-        if path.usesInterfaceType(.wifi) { return .wifi }
+        if path.usesInterfaceType(.wifi) { return path.isExpensive ? .hotspot : .wifi }
         if path.usesInterfaceType(.cellular) { return .cellular }
         if path.usesInterfaceType(.other) { return .other }
         return nil
+    }
+
+    /// Apple Personal Hotspot NAT is 172.20.10.0/28 (Wi-Fi, USB, and Bluetooth).
+    /// Network.framework also marks a Wi-Fi path expensive when it is tethered.
+    private static func looksLikePersonalHotspot(address: String?, kind: LinkKind, path: NWPath?) -> Bool {
+        if let address, isAppleHotspotIPv4(address) { return true }
+        if let path, path.isExpensive, kind == .wifi { return true }
+        return false
+    }
+
+    private static func isAppleHotspotIPv4(_ ip: String) -> Bool {
+        let parts = ip.split(separator: ".").compactMap { UInt8($0) }
+        guard parts.count == 4 else { return false }
+        return parts[0] == 172 && parts[1] == 20 && parts[2] == 10 && parts[3] < 16
     }
 
     private static func fallbackDisplay(bsd: String, kind: LinkKind) -> String {
@@ -180,6 +200,7 @@ enum NetworkProbe {
         case .wifi: "Wi-Fi"
         case .ethernet: "Ethernet"
         case .cellular: "Cellular"
+        case .hotspot: "Personal Hotspot"
         case .vpn: "VPN"
         case .offline, .other: bsd
         }

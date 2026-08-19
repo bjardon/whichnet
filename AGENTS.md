@@ -18,11 +18,11 @@ make run
 
 That builds a `dist/WhichNet.app` agent (no Dock icon) and opens it. Click the menu bar icon:
 
-- The symbol should match the default route (`wifi` vs `app.connected.to.app.below.fill`).
+- The symbol should match the default route (`wifi` vs `personalhotspot` vs `app.connected.to.app.below.fill`).
 - The panel (respawken-style window, not a native menu) should badge the default-route interface as **Active** in green, and each row should show that interface’s SF Symbol.
 - Other up links (Wi-Fi while docked, etc.) should appear with a **Standby** badge in blue.
 - Hardware ports with no link (unplugged Ethernet, Thunderbolt NICs) should still appear, badged **Inactive** in muted gray.
-- A Wi-Fi row should show **Network** (SSID) and **Channel** after Location is allowed.
+- A Wi-Fi or Personal Hotspot row should show **Network** (SSID) and **Channel** after Location is allowed. An iPhone Personal Hotspot should use the `personalhotspot` symbol, not `wifi`.
 - The footer **Launch at login** checkbox should match System Settings → General → Login Items.
 
 User-visible check: with Wi-Fi on, plug in the Thunderbolt dock. The icon should switch to Ethernet and the dock NIC should be listed as carrying internet. Unplug: it should return to Wi-Fi.

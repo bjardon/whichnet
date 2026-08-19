@@ -2,7 +2,7 @@
 
 Menu bar indicator for the network interface that is actually carrying internet on macOS.
 
-macOS keeps Wi-Fi connected when a Thunderbolt dock Ethernet link is plugged in, and the system Wi-Fi icon does not show that wired is the active path. WhichNet is a single status item whose icon follows the default route: Ethernet when the dock is carrying traffic, Wi-Fi when it isn’t. The panel lists every hardware port, including inactive Ethernet and Thunderbolt adapters.
+macOS keeps Wi-Fi connected when a Thunderbolt dock Ethernet link is plugged in, and the system Wi-Fi icon does not show that wired is the active path. WhichNet is a single status item whose icon follows the default route: Ethernet when the dock is carrying traffic, Personal Hotspot when tethered to an iPhone, Wi-Fi otherwise. The panel lists every hardware port, including inactive Ethernet and Thunderbolt adapters.
 
 ## Run
 
