@@ -1,16 +1,47 @@
+import AppKit
 import SwiftUI
 
-extension LinkKind {
-    var accent: Color {
+private enum RowStatus {
+    case active
+    case standby
+    case inactive
+    case offline
+
+    var label: String {
         switch self {
-        case .wifi: Color(red: 0.35, green: 0.62, blue: 0.98)
-        case .ethernet: Color(red: 0.22, green: 0.78, blue: 0.72)
-        case .cellular: Color(red: 0.98, green: 0.62, blue: 0.28)
-        case .vpn: Color(red: 0.70, green: 0.45, blue: 0.95)
-        case .other: Color(red: 0.55, green: 0.55, blue: 0.60)
-        case .offline: Color(red: 0.93, green: 0.35, blue: 0.32)
+        case .active: "Active"
+        case .standby: "Standby"
+        case .inactive: "Inactive"
+        case .offline: "Offline"
         }
     }
+
+    var iconColor: Color {
+        switch self {
+        case .active: Self.activeGreen
+        case .standby: Self.standbyBlue
+        case .inactive, .offline: Color.primary.opacity(0.28)
+        }
+    }
+
+    var badgeForeground: Color {
+        switch self {
+        case .active: Self.activeGreen
+        case .standby: Self.standbyBlue
+        case .inactive, .offline: .secondary
+        }
+    }
+
+    var badgeBackground: Color {
+        switch self {
+        case .active: Self.activeGreen.opacity(0.16)
+        case .standby: Self.standbyBlue.opacity(0.16)
+        case .inactive, .offline: Color.primary.opacity(0.08)
+        }
+    }
+
+    private static let activeGreen = Color(nsColor: .systemGreen)
+    private static let standbyBlue = Color(nsColor: .systemBlue)
 }
 
 struct PanelView: View {
@@ -114,18 +145,18 @@ private struct InterfaceRow: View {
             HStack(spacing: 8) {
                 Image(systemName: iface.kind.symbolName)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(iconColor)
+                    .foregroundStyle(status.iconColor)
                     .frame(width: 16, height: 16)
                 Text(iface.displayName)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(iface.isLinkActive || isPrimary ? .primary : .secondary)
                 Spacer()
-                Text(badge)
+                Text(status.label)
                     .font(.system(size: 9, weight: .medium))
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1.5)
-                    .background(Capsule().fill(Color.primary.opacity(0.08)))
-                    .foregroundStyle(.secondary)
+                    .background(Capsule().fill(status.badgeBackground))
+                    .foregroundStyle(status.badgeForeground)
             }
 
             if iface.displayName != iface.kind.title {
@@ -145,16 +176,11 @@ private struct InterfaceRow: View {
         .opacity(iface.isLinkActive || isPrimary ? 1 : 0.72)
     }
 
-    private var badge: String {
-        if isPrimary, hasInternet { return "Active" }
-        if isPrimary { return "Offline" }
-        if iface.isLinkActive { return "Standby" }
-        return "Inactive"
-    }
-
-    private var iconColor: Color {
-        if iface.isLinkActive || isPrimary { return iface.kind.accent }
-        return Color.primary.opacity(0.28)
+    private var status: RowStatus {
+        if isPrimary, hasInternet { return .active }
+        if isPrimary { return .offline }
+        if iface.isLinkActive { return .standby }
+        return .inactive
     }
 }
 

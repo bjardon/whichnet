@@ -7,3 +7,4 @@
 - [x] Launch at login — first launch registers via `SMAppService`; panel toggle can undo it; later launches don't re-register if it was turned off
 - [x] Wi-Fi row shows network name (SSID; needs Location) and channel
 - [x] Dock Ethernet vs Wi-Fi switch confirmed on this machine
+- [x] Panel row icons and status pills are colored by status (Active green, Standby blue, Inactive muted)
